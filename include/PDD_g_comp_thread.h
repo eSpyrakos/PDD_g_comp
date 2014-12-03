@@ -240,14 +240,32 @@ private:
     
     double traj_imported[LOWER_BODY_DOF][TRAJ_SAMPLES];
     
-    
     yarp::sig::Vector q_left_leg;
     yarp::sig::Vector q_dot_left_leg;
     
     yarp::sig::Vector q_right_leg;
     yarp::sig::Vector q_dot_right_leg;
     
-
+    // left single support gains
+    yarp::sig::Vector left_single_left_leg_motor_position_gains;
+    yarp::sig::Vector left_single_left_leg_motor_velocity_gains;
+    yarp::sig::Vector left_single_right_leg_motor_position_gains;
+    yarp::sig::Vector left_single_right_leg_motor_velocity_gains;
+    // right single support gains
+    yarp::sig::Vector right_single_left_leg_motor_position_gains;
+    yarp::sig::Vector right_single_left_leg_motor_velocity_gains;
+    yarp::sig::Vector right_single_right_leg_motor_position_gains;
+    yarp::sig::Vector right_single_right_leg_motor_velocity_gains;
+    // double support gains
+    yarp::sig::Vector double_leg_motor_position_gains;
+    yarp::sig::Vector double_leg_motor_velocity_gains;
+    // ff constituent
+    yarp::sig::Vector urefmat_double;
+    // ugc for double support
+    yarp::sig::Vector ugc_double;
+    
+    // ucs YARP matrix for double support
+    yarp::sig::Matrix ucs_yarp_mat_double;
 
     /**
     * @brief ...
@@ -256,7 +274,7 @@ private:
     * @return bool
     */
     bool importTrajectory(double traj[LOWER_BODY_DOF][TRAJ_SAMPLES]);
- 
+    
 public:
     
     /**
