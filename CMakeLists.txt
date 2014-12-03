@@ -37,10 +37,12 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
+set(CMAKE_MODULE_PATH "/opt/ros/indigo/share/")
 
 FIND_PACKAGE(YARP REQUIRED)
 FIND_PACKAGE(idynutils REQUIRED)
+FIND_PACKAGE(kdl_codyco REQUIRED)
+FIND_PACKAGE(orocos_kdl REQUIRED)
 FIND_PACKAGE(GYM REQUIRED)
 FIND_PACKAGE(paramHelp REQUIRED)
 
@@ -60,6 +62,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${iDynTree_LIBRARIES}
                                       ${YARP_LIBRARIES}
 				      ${idynutils_LIBRARIES}
 				      ${GYM_LIBRARIES}
+				      ${kdl_codyco_LIBRARIES}
+				      ${orocos_kdl_LIBRARIES}
 				      )
 
 add_subdirectory(app)

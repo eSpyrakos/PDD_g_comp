@@ -118,10 +118,10 @@ const float ucs_mat_Doub[6][3]=
 };
 ////BENT MODEL GAINS HIGH VOLTAGES BOTH LEGS////
 
-// const double gtorque_single[JOINT_NUMBER] = {30.1376, 29.0724, 5.9147, -1*9.4133, -1*4.3860, -1*0.3076};
-// const double gtorque_double[JOINT_NUMBER / LEGS_NUMBER] = {25.7516, 19.6539, 5.8693};
-// const double feed_forward_single[JOINT_NUMBER] = {4.472007e+001, 3.654815e+001, 3.655567e+001, 8.893022e+001, 5.758744e+001, 9.937348e+001 };
-// const double feed_forward_double[JOINT_NUMBER / LEGS_NUMBER] = {54.2535, 29.2865,27.8388};
+const double gtorque_single[JOINT_NUMBER] = {30.1376, 29.0724, 5.9147, -1*9.4133, -1*4.3860, -1*0.3076};
+const double gtorque_double[JOINT_NUMBER / LEGS_NUMBER] = {25.7516, 19.6539, 5.8693};
+const double feed_forward_single[JOINT_NUMBER] = {4.472007e+001, 3.654815e+001, 3.655567e+001, 8.893022e+001, 5.758744e+001, 9.937348e+001 };
+const double feed_forward_double[JOINT_NUMBER / LEGS_NUMBER] = {54.2535, 29.2865,27.8388};
 // 
 // ////%%%%%%%%%%%%%% ONLINE G-COMP DOUBLE SUPPORT %%%%%%%%%%%%%%%
 // urefmat_Doub[0] =   gtorque_double[0]*(float((j8+j13)/2));

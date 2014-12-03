@@ -3,6 +3,8 @@
 
 #include <math.h>
 #include <GYM/generic_thread.hpp>
+#include <idynutils/yarp_single_chain_interface.h>
+
 #include "PDD_g_comp_constants.h"
 
 
@@ -232,7 +234,19 @@ char Gcomp_Gains[30];
 class PDD_g_comp_thread : public generic_thread
 {
 private:
+    walkman::yarp_single_chain_interface torso;
+    walkman::yarp_single_chain_interface left_leg;
+    walkman::yarp_single_chain_interface right_leg;
+    
     double traj_imported[LOWER_BODY_DOF][TRAJ_SAMPLES];
+    
+    
+    yarp::sig::Vector q_left_leg;
+    yarp::sig::Vector q_dot_left_leg;
+    
+    yarp::sig::Vector q_right_leg;
+    yarp::sig::Vector q_dot_right_leg;
+    
 
 
     /**
@@ -267,6 +281,10 @@ public:
      * 
      */
     virtual void run();
+    
+    void sense_legs();
+    
+    void control_law();
     
 };
 
