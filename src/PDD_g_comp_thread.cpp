@@ -14,6 +14,9 @@ PDD_g_comp_thread::PDD_g_comp_thread(  std::string module_prefix,
                                     left_leg("left_leg", module_prefix, "coman", true),
                                     right_leg("right_leg", module_prefix, "coman", true),
                                     
+                                    q_desired_left_leg(JOINT_NUMBER, 2),
+                                    q_desired_right_leg(JOINT_NUMBER, 2),
+                                    
                                     left_single_left_leg_motor_position_gains((JOINT_NUMBER / LEGS_NUMBER), &posPID_left[9]),   // HIP, KNEE, ANKLE
                                     left_single_left_leg_motor_velocity_gains((JOINT_NUMBER / LEGS_NUMBER), &posPID_left[21]),  // HIP, KNEE, ANKLE
                                     left_single_right_leg_motor_position_gains((JOINT_NUMBER / LEGS_NUMBER), &posPID_left[6]),  // ANKLE, KNEE, HIP       
@@ -30,6 +33,7 @@ PDD_g_comp_thread::PDD_g_comp_thread(  std::string module_prefix,
                                     urefmat_double((JOINT_NUMBER / LEGS_NUMBER), 0.0),
                                     ugc_double(JOINT_NUMBER, 0.0),
                                     ucs_yarp_mat_double(JOINT_NUMBER, (JOINT_NUMBER / LEGS_NUMBER)), 
+                                    Gff_double(JOINT_NUMBER, 0.0),
                                     
                                     generic_thread( module_prefix, rf, ph )
 {
@@ -37,6 +41,17 @@ PDD_g_comp_thread::PDD_g_comp_thread(  std::string module_prefix,
 
 bool PDD_g_comp_thread::custom_init()
 {
+    // initializing ucs yarp matrix for double support
+    for(int i = 0; i < JOINT_NUMBER; i++) {
+        yarp::sig::Vector actual_row;
+        for(int j = 0 ; j < (JOINT_NUMBER / LEGS_NUMBER); j++) {
+            actual_row.push_back(ucs_mat_Doub[i][j]);
+        }
+        ucs_yarp_mat_double.setRow(i, actual_row);
+        actual_row.clear();
+    }
+    
+    
     // import the desired trajectory from .txt
     importTrajectory(traj_imported);
     
@@ -55,6 +70,22 @@ void PDD_g_comp_thread::run()
     sense_legs();
     control_law();
     
+    std::cout << "Desired Torque : " << desired_torque.toString() << std::endl;
+    
+        
+    yarp::sig::Vector right_chain_ref(torque_right_leg);
+    right_chain_ref[0] = desired_torque[3];
+    right_chain_ref[3] = desired_torque[4];
+    right_chain_ref[5] = desired_torque[5];
+    
+    yarp::sig::Vector left_chain_ref(torque_left_leg);
+    left_chain_ref[0] = desired_torque[2];
+    left_chain_ref[3] = desired_torque[1];
+    left_chain_ref[5] = desired_torque[0];
+
+    right_leg.move(right_chain_ref);
+    left_leg.move(left_chain_ref);
+   
 }
 
 void PDD_g_comp_thread::sense_legs()
@@ -62,15 +93,17 @@ void PDD_g_comp_thread::sense_legs()
     // sense left_leg
     left_leg.sensePosition(q_left_leg);
     left_leg.senseVelocity(q_dot_left_leg);
+    left_leg.senseTorque(torque_left_leg);
     // sense right_leg
     right_leg.sensePosition(q_right_leg);
     right_leg.senseVelocity(q_dot_right_leg);
+    right_leg.senseTorque(torque_right_leg);
     
     // DEBUG
-    std::cout << "Left Leg q : " << q_left_leg.toString() << std::endl;
-    std::cout << "Left Leg q_dot : " << q_dot_left_leg.toString() << std::endl;
-    std::cout << "Right Leg q : " << q_right_leg.toString() << std::endl;
-    std::cout << "Right Leg q_dot : " << q_dot_right_leg.toString() << std::endl;
+//     std::cout << "Left Leg q : " << q_left_leg.toString() << std::endl;
+//     std::cout << "Left Leg q_dot : " << q_dot_left_leg.toString() << std::endl;
+//     std::cout << "Right Leg q : " << q_right_leg.toString() << std::endl;
+//     std::cout << "Right Leg q_dot : " << q_dot_right_leg.toString() << std::endl;
 }
 
 
@@ -118,27 +151,41 @@ void PDD_g_comp_thread::control_law()
     double_support_velocity_gains[3] = ( double_leg_motor_velocity_gains[2] / 2 );
     double_support_velocity_gains[4] = ( double_leg_motor_velocity_gains[1] / 2 );
     double_support_velocity_gains[5] = ( double_leg_motor_velocity_gains[0] / 2 );
+    
+    //updating urefmat_double
+    urefmat_double[0] = gtorque_double[0] * ( ( q_desired_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[ANKLE_PITCH_JOINT_INDEX] ) / 2 );
+    
+    urefmat_double[1] = gtorque_double[1] * ( ( q_desired_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[ANKLE_PITCH_JOINT_INDEX] +
+                                              q_desired_left_leg[KNEE_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[KNEE_PITCH_JOINT_INDEX] ) / 2 );
+    
+    urefmat_double[2] = gtorque_double[2] * ( ( q_desired_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[ANKLE_PITCH_JOINT_INDEX] +
+                                              q_desired_left_leg[KNEE_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[KNEE_PITCH_JOINT_INDEX] + 
+                                              q_desired_left_leg[HIP_PITCH_JOINT_INDEX] + 
+                                              q_desired_right_leg[HIP_PITCH_JOINT_INDEX]) / 2 );
+    // updating ugc_double
+    ugc_double.zero();
+    ugc_double += ucs_yarp_mat_double * urefmat_double;
+    
+    // updating Gff_double
+    Gff_double[0] = feed_forward_double[0] * q_desired_right_leg[ANKLE_PITCH_JOINT_INDEX];
+    Gff_double[1] = feed_forward_double[1] * q_desired_right_leg[KNEE_PITCH_JOINT_INDEX];
+    Gff_double[2] = feed_forward_double[2] * q_desired_right_leg[HIP_PITCH_JOINT_INDEX];
+    Gff_double[3] = feed_forward_double[2] * q_desired_left_leg[HIP_PITCH_JOINT_INDEX];
+    Gff_double[4] = feed_forward_double[1] * q_desired_left_leg[KNEE_PITCH_JOINT_INDEX];
+    Gff_double[5] = feed_forward_double[0] * q_desired_left_leg[ANKLE_PITCH_JOINT_INDEX];
+    
+    
     // torques
     yarp::sig::Vector double_support_position_torque = double_support_pitch_position * double_support_position_gains;
     yarp::sig::Vector double_support_velocity_torque = double_support_pitch_velocity * double_support_velocity_gains;
+    yarp::sig::Vector double_support_ff_torque = Gff_double + ugc_double;
     
-    //updating urefmat_Doub
-    urefmat_double[0] = gtorque_double[0] * ( ( q_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[ANKLE_PITCH_JOINT_INDEX] ) / 2 );
-    
-    urefmat_double[1] = gtorque_double[1] * ( ( q_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[ANKLE_PITCH_JOINT_INDEX] +
-                                              q_left_leg[KNEE_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[KNEE_PITCH_JOINT_INDEX] ) / 2 );
-    
-    urefmat_double[2] = gtorque_double[2] * ( ( q_left_leg[ANKLE_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[ANKLE_PITCH_JOINT_INDEX] +
-                                              q_left_leg[KNEE_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[KNEE_PITCH_JOINT_INDEX] + 
-                                              q_left_leg[HIP_PITCH_JOINT_INDEX] + 
-                                              q_right_leg[HIP_PITCH_JOINT_INDEX]) / 2 );
-    // updating ugc
-
+    desired_torque = double_support_position_torque + double_support_velocity_torque + double_support_ff_torque;
 }
 
 

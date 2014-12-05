@@ -11,13 +11,14 @@
 
 #define TRAJ_POINTS 20000
 
+#define VOLTAGE_TO_TORQUE_GAIN 6.1747
 
 const double posPID_right[JOINT_NUMBER * JOINT_GAINS_NUMBER]  = {
     
                                                           // Link Position
 							  3.174108e+000 ,	//0 Right Ankle
 							  3.491918e+000 ,	//1 Right Knee
-							  -3.016638e-002,	//2 Right Hip
+							 -3.016638e-002,	//2 Right Hip
 							  5.409832e+000 ,	//3 Left Hip 
 							  3.255037e+000 ,	//4 Left Knee
 							  1.780261e+000 ,	//5 Left Ankle
@@ -53,7 +54,7 @@ const double posPID_left[JOINT_NUMBER * JOINT_GAINS_NUMBER]  = {
  							  1.780261e+000 ,	//0  Right Ankle
 							  3.255037e+000 ,	//1  Right Knee
 							  5.409832e+000 ,	//2  Right Hip
-							  -3.016638e-002,	//3  Left Hip
+							 -3.016638e-002,	//3  Left Hip
 							  3.491918e+000 ,	//4  Left Knee
 							  3.174108e+000 ,	//5  Left Ankle
                                                           
@@ -81,50 +82,54 @@ const double posPID_left[JOINT_NUMBER * JOINT_GAINS_NUMBER]  = {
 							  1.762404e-001 ,	//22 Left Knee
 							  2.221849e-001 	//23 Left Ankle
 						      };
-						      
+                                                      
+                                                      						      
 const double posPID_double[JOINT_NUMBER * JOINT_GAINS_NUMBER]  = {
 							    // link position
-							    4.1551  ,	//0  Ankle
-							    -7.2676 ,	//1  Knee
-							    -7.6079 ,	//2  Hip
+							    0  ,	//0  Ankle
+							    0  ,	//1  Knee
+							    0  ,	//2  Hip
 							    // motor position
-							    50.0984 ,	//3  Ankle
-							    36.5542 ,	//4  Knee
-							    35.4467 ,	//5  Hip
+							    36.3625 ,	//3  Ankle
+							    28.2021 ,	//4  Knee
+							    20.4983 ,	//5  Hip
 							    // link velocity
-							    7.5292 ,	//6  Ankle
-							    2.1130 ,	//7  Knee
-							    0.0354 ,	//8  Hip
+							    2.8544 ,	//6  Ankle
+							    0.8996 ,	//7  Knee
+							    0.1178 ,	//8  Hip
 							    // motor velocity
-							    0.2636 ,	//9  Ankle
-							    0.1904 ,	//10 Knee
-							    0.1895  	//11 Hip
+							    0.1938 ,	//9  Ankle
+							    0.1503 ,	//10 Knee
+							    0.1098  	//11 Hip
 							  };
 ////BENT MODEL GAINS HIGH VOLTAGES BOTH LEGS////
                                                           
-const float ucs_mat_Sing[6][6]=
-{   -0.40711,-0.40711,-0.40711,-0.40711,-0.40711,-0.40711,
-    -1.0522e-016,-0.47391,-0.47391,-0.47391,-0.47391,-0.47391,
-    7.8388e-017,7.933e-017,-0.14464,-0.14464,-0.14464,-0.14464,
-    -5.9165e-031,1.1102e-016,-2.3666e-030,-0.14464,-0.14464,-0.14464,
-    0,0,0,0,-0.47391,-0.47391,
-    0,2.2204e-016,2.2204e-016,0,4.4409e-016,-0.40711
+const float ucs_mat_Sing[JOINT_NUMBER][JOINT_NUMBER]=
+{      -0.40711,      -0.40711,     -0.40711,     -0.40711,     -0.40711,     -0.40711,
+   -1.0522e-016,      -0.47391,     -0.47391,     -0.47391,     -0.47391,     -0.47391,
+    7.8388e-017,    7.933e-017,     -0.14464,     -0.14464,     -0.14464,     -0.14464,
+   -5.9165e-031,   1.1102e-016, -2.3666e-030,     -0.14464,     -0.14464,     -0.14464,
+              0,             0,            0,            0,     -0.47391,     -0.47391,
+              0,   2.2204e-016,  2.2204e-016,            0,  4.4409e-016,     -0.40711
 };
 
-const float ucs_mat_Doub[6][3]=
-{	-0.35312,-0.32903,-0.32834,
-	-0.35312,-0.32903,-0.32834,
-	0.039993,-0.35294,-0.35711,
-	0.039993,-0.35294,-0.35711,
-	0.0071042,-0.017147,-0.1078,
-	0.0071042,-0.017147,-0.1078
+const float ucs_mat_Doub[JOINT_NUMBER][JOINT_NUMBER / LEGS_NUMBER]=
+{	-0.1159,   -0.1159,   -0.1159,
+        -0.1159,   -0.1159,   -0.1159,
+         0.0000,   -0.1081,   -0.1081,
+         0.0000,   -0.1081,   -0.1081,
+        -0.0000,   -0.0000,   -0.1069,
+        -0.0000,   -0.0000,   -0.1069
 };
+
+
 ////BENT MODEL GAINS HIGH VOLTAGES BOTH LEGS////
 
 const double gtorque_single[JOINT_NUMBER] = {30.1376, 29.0724, 5.9147, -1*9.4133, -1*4.3860, -1*0.3076};
-const double gtorque_double[JOINT_NUMBER / LEGS_NUMBER] = {25.7516, 19.6539, 5.8693};
+const double gtorque_double[JOINT_NUMBER / LEGS_NUMBER] = {47.2273, 44.5837, 7.1666};
 const double feed_forward_single[JOINT_NUMBER] = {4.472007e+001, 3.654815e+001, 3.655567e+001, 8.893022e+001, 5.758744e+001, 9.937348e+001 };
-const double feed_forward_double[JOINT_NUMBER / LEGS_NUMBER] = {54.2535, 29.2865,27.8388};
+const double feed_forward_double[JOINT_NUMBER / LEGS_NUMBER] = {36.3625, 28.2021, 20.4983};
+
 // 
 // ////%%%%%%%%%%%%%% ONLINE G-COMP DOUBLE SUPPORT %%%%%%%%%%%%%%%
 // urefmat_Doub[0] =   gtorque_double[0]*(float((j8+j13)/2));

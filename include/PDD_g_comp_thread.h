@@ -241,10 +241,14 @@ private:
     double traj_imported[LOWER_BODY_DOF][TRAJ_SAMPLES];
     
     yarp::sig::Vector q_left_leg;
+    yarp::sig::Vector q_desired_left_leg;
     yarp::sig::Vector q_dot_left_leg;
+    yarp::sig::Vector torque_left_leg;
     
     yarp::sig::Vector q_right_leg;
+    yarp::sig::Vector q_desired_right_leg;
     yarp::sig::Vector q_dot_right_leg;
+    yarp::sig::Vector torque_right_leg;
     
     // left single support gains
     yarp::sig::Vector left_single_left_leg_motor_position_gains;
@@ -266,6 +270,12 @@ private:
     
     // ucs YARP matrix for double support
     yarp::sig::Matrix ucs_yarp_mat_double;
+    
+    // feed forward gain
+    yarp::sig::Vector Gff_double;
+    
+    //desired torque for pitch joints
+    yarp::sig::Vector desired_torque;
 
     /**
     * @brief ...
