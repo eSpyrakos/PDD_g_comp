@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <GYM/generic_thread.hpp>
+#include <GYM/yarp_status_interface.h>
 #include <idynutils/yarp_single_chain_interface.h>
 
 #include "PDD_g_comp_constants.h"
@@ -243,12 +244,10 @@ private:
     yarp::sig::Vector q_left_leg;
     yarp::sig::Vector q_desired_left_leg;
     yarp::sig::Vector q_dot_left_leg;
-    yarp::sig::Vector torque_left_leg;
     
     yarp::sig::Vector q_right_leg;
     yarp::sig::Vector q_desired_right_leg;
     yarp::sig::Vector q_dot_right_leg;
-    yarp::sig::Vector torque_right_leg;
     
     // left single support gains
     yarp::sig::Vector left_single_left_leg_motor_position_gains;
@@ -284,6 +283,9 @@ private:
     * @return bool
     */
     bool importTrajectory(double traj[LOWER_BODY_DOF][TRAJ_SAMPLES]);
+	
+	walkman::yarp_status_interface sensed_voltage;
+	walkman::yarp_status_interface ref_voltage;
     
 public:
     

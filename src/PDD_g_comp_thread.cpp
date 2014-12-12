@@ -14,8 +14,8 @@ PDD_g_comp_thread::PDD_g_comp_thread(  std::string module_prefix,
                                     left_leg("left_leg", module_prefix, "coman", true),
                                     right_leg("right_leg", module_prefix, "coman", true),
                                     
-                                    q_desired_left_leg(JOINT_NUMBER, 2),
-                                    q_desired_right_leg(JOINT_NUMBER, 2),
+                                    q_desired_left_leg(JOINT_NUMBER, 0.0),
+                                    q_desired_right_leg(JOINT_NUMBER, 0.0),
                                     
                                     left_single_left_leg_motor_position_gains((JOINT_NUMBER / LEGS_NUMBER), &posPID_left[9]),   // HIP, KNEE, ANKLE
                                     left_single_left_leg_motor_velocity_gains((JOINT_NUMBER / LEGS_NUMBER), &posPID_left[21]),  // HIP, KNEE, ANKLE
@@ -34,6 +34,9 @@ PDD_g_comp_thread::PDD_g_comp_thread(  std::string module_prefix,
                                     ugc_double(JOINT_NUMBER, 0.0),
                                     ucs_yarp_mat_double(JOINT_NUMBER, (JOINT_NUMBER / LEGS_NUMBER)), 
                                     Gff_double(JOINT_NUMBER, 0.0),
+                                    
+                                    sensed_voltage(module_prefix),
+                                    ref_voltage(module_prefix),
                                     
                                     generic_thread( module_prefix, rf, ph )
 {
@@ -56,12 +59,28 @@ bool PDD_g_comp_thread::custom_init()
     importTrajectory(traj_imported);
     
     // set the control mode on the chains
-//     torso.setTorqueMode();
-//     left_leg.setTorqueMode();
-//     right_leg.setTorqueMode();
     torso.setPositionMode();
     left_leg.setPositionMode();
     right_leg.setPositionMode();
+	
+	// status
+	sensed_voltage.start();
+	ref_voltage.start();
+	
+	
+	// set PID to 0 for pitch joints
+	yarp::dev::Pid current_pid(0.0, 0.0, 0.0,
+							   0.0, 0.0, 0.0,
+							   0.0, 0.0, 0.0);
+	
+	left_leg.setPIDGain(0, current_pid);
+	left_leg.setPIDGain(3, current_pid);
+	left_leg.setPIDGain(5, current_pid);
+	
+	right_leg.setPIDGain(0, current_pid);
+	right_leg.setPIDGain(3, current_pid);
+	right_leg.setPIDGain(5, current_pid);
+	
     return true;
 }
 
@@ -70,21 +89,28 @@ void PDD_g_comp_thread::run()
     sense_legs();
     control_law();
     
-    std::cout << "Control voltages : " << control_voltage.toString() << " Volt" <<  std::endl;
+	control_voltage *= (1000 / 2);
+    std::cout << "Control voltages : " << control_voltage.toString() << " mV / 2" <<  std::endl;
     
-    yarp::sig::Vector right_chain_ref(torque_right_leg);
-    right_chain_ref[0] = control_voltage[3];
-    right_chain_ref[3] = control_voltage[4];
-    right_chain_ref[5] = control_voltage[5];
-    
-    yarp::sig::Vector left_chain_ref(torque_left_leg);
-    left_chain_ref[0] = control_voltage[2];
-    left_chain_ref[3] = control_voltage[1];
-    left_chain_ref[5] = control_voltage[0];
+//     yarp::sig::Vector right_chain_ref(sensed_voltage_right_leg);
+//     right_chain_ref[0] = control_voltage[3];
+//     right_chain_ref[3] = control_voltage[4];
+//     right_chain_ref[5] = control_voltage[5];
+//     
+//     yarp::sig::Vector left_chain_ref(sensed_voltage_left_leg);
+//     left_chain_ref[0] = control_voltage[2];
+//     left_chain_ref[3] = control_voltage[1];
+//     left_chain_ref[5] = control_voltage[0];
     
     yarp::sig::Vector left_leg_voltage( left_leg.getNumberOfJoints(), 0.0);
     left_leg.getVoltage(left_leg_voltage);
-    std::cout << "Left Leg voltages : " << left_leg_voltage.toString() << " Volt" <<  std::endl;
+//     std::cout << "Left Leg voltages : " << left_leg_voltage.toString() << " Volt" <<  std::endl;
+	
+	yarp::os::Bottle sensed_voltage_bottle;
+	sensed_voltage_bottle.add(left_leg_voltage[0]);
+	sensed_voltage.setStatus(std::string("sensed"), sensed_voltage_bottle, 0);
+	
+	left_leg.setVoltage()
    
 }
 
@@ -93,11 +119,9 @@ void PDD_g_comp_thread::sense_legs()
     // sense left_leg
     left_leg.sensePosition(q_left_leg);
     left_leg.senseVelocity(q_dot_left_leg);
-    left_leg.senseTorque(torque_left_leg);
     // sense right_leg
     right_leg.sensePosition(q_right_leg);
     right_leg.senseVelocity(q_dot_right_leg);
-    right_leg.senseTorque(torque_right_leg);
     
     // DEBUG
 //     std::cout << "Left Leg q : " << q_left_leg.toString() << std::endl;
@@ -193,8 +217,6 @@ void PDD_g_comp_thread::control_law()
 bool PDD_g_comp_thread::PDD_g_comp_voltage()
 {
     std::vector<yarp::dev::Pid> PidGains(left_leg.getNumberOfJoints());
-//     yarp::dev::Pid current_pid;
-//     current_pid.k
     
     left_leg.getPIDGains(PidGains);
     
