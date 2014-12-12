@@ -70,21 +70,21 @@ void PDD_g_comp_thread::run()
     sense_legs();
     control_law();
     
-    std::cout << "Desired Torque : " << desired_torque.toString() << std::endl;
+    std::cout << "Control voltages : " << control_voltage.toString() << " Volt" <<  std::endl;
     
-        
     yarp::sig::Vector right_chain_ref(torque_right_leg);
-    right_chain_ref[0] = desired_torque[3];
-    right_chain_ref[3] = desired_torque[4];
-    right_chain_ref[5] = desired_torque[5];
+    right_chain_ref[0] = control_voltage[3];
+    right_chain_ref[3] = control_voltage[4];
+    right_chain_ref[5] = control_voltage[5];
     
     yarp::sig::Vector left_chain_ref(torque_left_leg);
-    left_chain_ref[0] = desired_torque[2];
-    left_chain_ref[3] = desired_torque[1];
-    left_chain_ref[5] = desired_torque[0];
-
-    right_leg.move(right_chain_ref);
-    left_leg.move(left_chain_ref);
+    left_chain_ref[0] = control_voltage[2];
+    left_chain_ref[3] = control_voltage[1];
+    left_chain_ref[5] = control_voltage[0];
+    
+    yarp::sig::Vector left_leg_voltage( left_leg.getNumberOfJoints(), 0.0);
+    left_leg.getVoltage(left_leg_voltage);
+    std::cout << "Left Leg voltages : " << left_leg_voltage.toString() << " Volt" <<  std::endl;
    
 }
 
@@ -185,7 +185,24 @@ void PDD_g_comp_thread::control_law()
     yarp::sig::Vector double_support_velocity_torque = double_support_pitch_velocity * double_support_velocity_gains;
     yarp::sig::Vector double_support_ff_torque = Gff_double + ugc_double;
     
-    desired_torque = double_support_position_torque + double_support_velocity_torque + double_support_ff_torque;
+    control_voltage =   double_support_position_torque + 
+                        double_support_velocity_torque + 
+                        double_support_ff_torque;
+}
+
+bool PDD_g_comp_thread::PDD_g_comp_voltage()
+{
+    std::vector<yarp::dev::Pid> PidGains(left_leg.getNumberOfJoints());
+//     yarp::dev::Pid current_pid;
+//     current_pid.k
+    
+    left_leg.getPIDGains(PidGains);
+    
+    for( int i = 0; i < left_leg.getNumberOfJoints(); i++ ) {
+        std::cout << "PID joint : " << i << " ---> Kd :" << PidGains[i].kd << std::endl;
+    } 
+    
+    
 }
 
 

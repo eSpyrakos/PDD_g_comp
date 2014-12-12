@@ -274,8 +274,8 @@ private:
     // feed forward gain
     yarp::sig::Vector Gff_double;
     
-    //desired torque for pitch joints
-    yarp::sig::Vector desired_torque;
+    // control signal (voltage) for pitch joints
+    yarp::sig::Vector control_voltage;
 
     /**
     * @brief ...
@@ -313,6 +313,8 @@ public:
     void sense_legs();
     
     void control_law();
+    
+    bool PDD_g_comp_voltage();
     
 };
 
